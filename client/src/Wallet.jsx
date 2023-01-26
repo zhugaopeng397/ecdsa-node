@@ -2,20 +2,34 @@ import server from "./server";
 import * as secp from "ethereum-cryptography/secp256k1";
 import { toHex } from "ethereum-cryptography/utils";
 
+const messageHash = "a33321f98e4ff1c283c76998f14f57447545d339b3db534c6d886decb4209f28";
+
+
 function Wallet({ address, setAddress, balance, setBalance, privateKey, setPrivateKey }) {
   async function onChange(evt) {
     const privateKey = evt.target.value;
     setPrivateKey(privateKey);
-    const address = toHex(secp.getPublicKey(privateKey));
-    setAddress(address);
 
     const signature = await secp.sign(messageHash, privateKey);
-  const isSigned = secp.verify(signature, messageHash, publicKey);
+    const publicKey = secp.getPublicKey(privateKey);
+
+    const address = toHex(publicKey);
+    setAddress(address);
+
+    const param = {
+      "signature": toHex(signature),
+      "publicKey": toHex(publicKey),
+      "messageHash": messageHash
+    };
+
 
     if (address) {
+      // const {
+      //   data: { balance },
+      // } = await server.get(`balance/${param}`);
       const {
         data: { balance },
-      } = await server.get(`balance/${address}`);
+      } = await server.post('balance', param);
       setBalance(balance);
     } else {
       setBalance(0);

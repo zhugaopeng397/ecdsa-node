@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const secp = require("ethereum-cryptography/secp256k1");
+const { toHex } = require("ethereum-cryptography/utils");
 const port = 3042;
 
 app.use(cors());
@@ -12,10 +14,22 @@ const balances = {
   "0481f2d5541fd2bb5a1853674dccc1b0c51dbc7575923d70ea5dfe2572a7c0e0c0323f2deb6efd7969573fcd74da7f3a2a4273ae29308a7eaff405828498f84035": 75,
 };
 
-app.get("/balance/:address", (req, res) => {
-  const { address } = req.params;
-  const balance = balances[address] || 0;
-  res.send({ balance });
+
+app.post("/balance", (req, res) => {
+
+  console.log(req.body);
+
+  const params = req.body;
+  const isSigned = secp.verify(params.signature, params.messageHash, params.publicKey);
+
+  console.log('isSigned', isSigned);
+  if (isSigned) {
+    const address = params.publicKey;
+    const balance = balances[address] || 0;
+    res.send({ balance });
+  } else {
+    console.log("operation failed!");
+  }
 });
 
 app.post("/send", (req, res) => {
